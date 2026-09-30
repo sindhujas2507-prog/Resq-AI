@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ResQ-AI · WhatsApp Voice Demo</title>
+<style>
+:root{--g:#128C7E;--n:#16243F}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eef3f7;color:var(--n)}
+header{background:linear-gradient(135deg,#0b3b66,#087f8c);color:#fff;padding:12px 18px}
+header b{font-size:22px}header small{display:block;opacity:.85;font-size:12px;margin-top:2px}
+.wrap{display:flex;gap:22px;justify-content:center;align-items:flex-start;padding:18px;flex-wrap:wrap}
+.phone{width:380px;max-width:100%;height:640px;border:3px solid var(--n);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;background:#e5ddd5;box-shadow:0 8px 30px #0003}
+.ph{background:var(--g);color:#fff;padding:11px 14px;display:flex;align-items:center;gap:10px}
+.av{width:38px;height:38px;border-radius:50%;background:#fff;color:var(--g);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px}
+.ph b{display:block;font-size:15px}.ph small{font-size:11px;opacity:.9}
+#chat{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+.b{max-width:86%;padding:7px 10px;border-radius:9px;font-size:14px;white-space:pre-line;box-shadow:0 1px 1px #0003;line-height:1.35;animation:pop .2s}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.in{background:#fff;align-self:flex-start;border-top-left-radius:2px}.out{background:#dcf8c6;align-self:flex-end;border-top-right-radius:2px}
+.b i{display:block;text-align:right;font-size:10px;color:#889;font-style:normal;margin-top:2px}
+.typing span{display:inline-block;width:7px;height:7px;margin:0 2px;background:#999;border-radius:50%;animation:bl 1s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.voice{display:flex;align-items:center;gap:8px;min-width:230px;cursor:pointer}
+.play{width:32px;height:32px;border-radius:50%;background:var(--g);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.wave{display:flex;align-items:center;gap:2px;height:28px;flex:1}.wave u{display:block;width:3px;background:#9db5a0;border-radius:2px}.wave u.on{background:var(--g)}
+.dur{font-size:11px;color:#667}
+.bar{display:flex;align-items:center;gap:8px;padding:8px;background:#f0f0f0}
+.bar input{flex:1;padding:10px 12px;border:0;border-radius:22px;font-size:14px}
+.mic{width:46px;height:46px;border-radius:50%;border:0;background:var(--g);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0}
+.mic.rec{background:#d32f2f;animation:pl 1s infinite}@keyframes pl{50%{transform:scale(1.12)}}
+.mic:disabled{opacity:.5}
+.recbar{flex:1;display:none;align-items:center;gap:8px;color:#d32f2f;font-weight:bold;font-size:14px}
+.recbar .w{display:flex;gap:2px;align-items:center;height:24px}.recbar .w u{width:3px;background:#d32f2f;border-radius:2px;animation:wv .6s infinite alternate}
+@keyframes wv{from{height:4px}to{height:22px}}
+.side{width:340px;max-width:100%}
+.card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 3px 12px #173b5d14;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:13px;color:var(--g);text-transform:uppercase;letter-spacing:.5px}
+.step{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:13px;color:#889;margin-bottom:4px;background:#f4f6f8}
+.step.on{background:#d8f3e8;color:#08744f;font-weight:bold}.step.done{background:#eef8f2;color:#08744f}
+.step .n{width:20px;height:20px;border-radius:50%;background:#cfd8dc;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+.step.on .n,.step.done .n{background:#159957}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:6px}.f div{background:#f8fafc;border-radius:8px;padding:7px;font-size:13px}.f b{display:block;font-size:10px;color:#64748b;text-transform:uppercase}
+.chips button{margin:3px 3px 0 0;padding:6px 11px;border:1px solid var(--g);background:#fff;color:var(--g);border-radius:16px;cursor:pointer;font-size:13px}
+.chips button.sel{background:var(--g);color:#fff}
+.reset{width:100%;padding:9px;border:0;border-radius:8px;background:#607d8b;color:#fff;cursor:pointer}
+.hint{font-size:12px;color:#64748b;margin-top:6px}
+</style></head><body>
+<header><b>🚨 ResQ-AI</b><small>Demo · press the 🎙️ voice note → ResQ-AI understands it → finds the nearest volunteer → sends live updates</small></header>
+<div class="wrap">
+  <div class="phone">
+    <div class="ph"><div class="av">RQ</div><div><b>ResQ-AI Emergency</b><small id="st">online</small></div></div>
+    <div id="chat"></div>
+    <div class="bar">
+      <input id="txt" placeholder="Type a message">
+      <div class="recbar" id="recbar"><span>●</span><span id="tm">0:00</span><div class="w"><u></u><u style="animation-delay:.1s"></u><u style="animation-delay:.2s"></u><u style="animation-delay:.3s"></u><u style="animation-delay:.15s"></u><u style="animation-delay:.25s"></u></div><span style="font-weight:normal;color:#666;font-size:12px">tap to send</span></div>
+      <button class="mic" id="mic" title="Voice note">🎙️</button>
+    </div>
+  </div>
+  <div class="side">
+    <div class="card"><h3>1 · Choose the voice note</h3>
+      <div class="chips" id="chips"></div>
+      <div class="hint">Then tap the green 🎙️ button in the phone. Tamil-English (Tanglish) emergency messages.</div></div>
+    <div class="card"><h3>2 · What ResQ-AI is doing</h3><div id="steps"></div></div>
+    <div class="card"><h3>3 · What the AI understood</h3><div class="f" id="fields"><div><b>Location</b>—</div><div><b>Need</b>—</div><div><b>People</b>—</div><div><b>Priority</b>—</div></div></div>
+    <button class="reset" id="reset">↺ Reset demo</button>
+    <div class="hint">Prototype: the WhatsApp chat and volunteers are simulated. Voice notes are pre-recorded samples.</div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const now=()=>new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const ICON={boat:"🚤",food:"🍚",water:"💧",medical:"🚑",shelter:"🏠",rescue:"🆘",blanket:"🧣"};
+
+/* sample voice notes (what the person "says") */
+const NOTES={
+ Flood:"Velachery la 2 boat irukku, 3 peru stranded, pregnant woman irukanga",
+ Medical:"T Nagar la oru paati unconscious, ambulance venum",
+ Fire:"Adyar la fire accident, 4 per stuck, rescue venum urgent"};
+let sel="Flood",busy=false,reqNo=0;
+
+/* sample volunteers: area, km from the spot, skills */
+const VOL=[
+ ["Arun Rescue Boat","Velachery",.32,["boat","rescue"]],["Velachery NGO Team","Velachery",.58,["boat","food","water","blanket"]],
+ ["Muthu Volunteer","Velachery",.84,["boat","rescue"]],["Dr. Meena First-Aid","Velachery",.45,["medical"]],["Velachery Relief Kitchen","Velachery",.9,["food","water","shelter"]],
+ ["Adyar Fire & Rescue Volunteers","Adyar",.5,["rescue","medical"]],["Rahim (fisherman)","Adyar",.6,["boat","rescue"]],["Fathima Food Team","Adyar",.4,["food","water"]],
+ ["T Nagar Medical Volunteers","T Nagar",.4,["medical"]],["Lakshmi (Rotary)","T Nagar",.6,["food","blanket","shelter"]],
+ ["Tambaram Relief Camp","Tambaram",.5,["shelter","food","medical"]],["Anna Nagar Rescue Squad","Anna Nagar",.5,["rescue","medical"]],
+ ["Sholinganallur Relief Camp","Sholinganallur",.6,["shelter","food","medical"]]];
+const AREAS=[["Velachery","velachery","வேளச்சேரி"],["Adyar","adyar","அடையாறு"],["T Nagar","t nagar","tnagar"],["Tambaram","tambaram"],["Anna Nagar","anna nagar","annanagar"],["Sholinganallur","sholinganallur"]];
+
+/* the "AI": reads the sentence and pulls out area / need / people / priority */
+function understand(text){
+  const t=text.toLowerCase();
+  const area=(AREAS.find(a=>a.slice(1).some(k=>t.includes(k)))||[])[0]||null;
+  const has=l=>l.some(k=>t.includes(k));
+  let res="rescue";
+  if(has(["boat","padagu","படகு"]))res="boat";else if(has(["ambulance","doctor","medical","unconscious","marundhu"]))res="medical";
+  else if(has(["shelter","tent"]))res="shelter";else if(has(["food","saapadu"]))res="food";else if(has(["water","thanni"]))res="water";
+  const type=has(["fire","smoke"])?"fire":res==="medical"?"medical":res==="boat"?"flood":"other";
+  const nums=(t.match(/\d+/g)||[]).map(Number);if(!nums.length&&/\boru\b/.test(t))nums.push(1);
+  const countable=["boat","food","water","blanket"].includes(res);
+  const qty=countable?(nums[0]||1):null,people=countable?(nums[1]||null):(nums[0]||null);
+  const high=has(["pregnant","child","paati","stranded","urgent","unconscious","stuck","trapped"])||type==="fire";
+  return{area,res,type,qty,people,priority:high?"HIGH":"NORMAL"};
+}
+const need=r=>r==="rescue"?["rescue","boat"]:[r];
+function match(info){return VOL.filter(v=>v[1]===info.area&&v[3].some(s=>need(info.res).includes(s))).sort((a,b)=>a[2]-b[2]).slice(0,3);}
+const eta=km=>Math.max(1,Math.round(km*9.5));
+
+/* chat helpers */
+function add(cls,html){const d=document.createElement("div");d.className="b "+cls;d.innerHTML=html;$("chat").appendChild(d);$("chat").scrollTop=1e9;return d;}
+async function bot(text,wait=900){
+  const t=add("in typing","<span></span><span></span><span></span>");await sleep(wait);
+  t.classList.remove("typing");t.innerHTML=esc(text)+"<i>"+now()+"</i>";$("chat").scrollTop=1e9;
+}
+function voiceBubble(){
+  const bars=Array.from({length:30},(_,i)=>`<u style="height:${6+Math.abs(Math.sin(i*1.7))*18|0}px"></u>`).join("");
+  const d=add("out",`<div class="voice"><div class="play">▶</div><div class="wave">${bars}</div><span class="dur">0:04</span></div><i>${now()} ✓✓</i>`);
+  d.querySelector(".voice").onclick=()=>{const us=[...d.querySelectorAll(".wave u")];us.forEach(u=>u.classList.remove("on"));
+    us.forEach((u,i)=>setTimeout(()=>u.classList.add("on"),i*130));};
+  return d;
+}
+const STEPS=["Voice note received","Speech → text","Extract area, need, urgency","Match nearby volunteers","Notify & track status"];
+function steps(n){$("steps").innerHTML=STEPS.map((s,i)=>`<div class="step ${i+1<n?"done":i+1===n?"on":""}"><span class="n">${i+1<n?"✓":i+1}</span>${s}</div>`).join("");}
+function fields(i){const f=(k,v)=>`<div><b>${k}</b>${esc(v)}</div>`;
+  $("fields").innerHTML=f("Location",i.area||"not found")+f("Need",(ICON[i.res]||"")+" "+(i.qty?i.qty+" ":"")+i.res)+f("People",i.people?i.people:"—")+f("Priority",i.priority);}
+
+/* the whole conversation */
+async function run(text,voice){
+  busy=true;$("mic").disabled=true;
+  steps(1);await sleep(500);
+  if(voice){steps(2);await bot("🎧 Listening to your voice note…",1100);}
+  const info=understand(text);
+  if(voice)await bot(`📝 I heard:\n“${text}”`,900);
+  steps(3);await bot("🧠 Understanding your emergency…",900);fields(info);
+  if(!info.area){await bot("Sorry, I could not find your area. Please send your area or landmark again.",700);steps(0);busy=false;$("mic").disabled=false;return;}
+  reqNo++;
+  await bot(`🚨 Emergency request #${reqNo}\n📍 ${info.area}\n${ICON[info.res]} Need: ${info.qty?info.qty+" ":""}${info.res}\n👥 ${info.people?(info.people===1?"1 person":info.people+" people"):"people: not stated"} • ${info.priority} priority`,700);
+  steps(4);const m=match(info);await bot("📡 Searching volunteers within 1 km…",1000);
+  if(!m.length){await bot("⚠️ No volunteer free right now. Forwarded to the control room. Call 112 if life is in danger.",800);steps(0);busy=false;$("mic").disabled=false;return;}
+  await bot(`Found ${m.length} nearby volunteer${m.length>1?"s":""}:\n`+m.map((v,i)=>`${i+1}. ${v[0]} • ${v[2].toFixed(2)} km ✅`).join("\n"),800);
+  steps(5);const v=m[0],e=eta(v[2]),nm=v[0].replace(/\s*\(.*\)/,"");
+  await bot(`⏳ Alerting ${nm}…`,900);
+  await bot(`✅ ${nm.toUpperCase()} ACCEPTED\nETA ~${e} min\n\nStatus: ✅ Accepted → 🚗 On the way → 📍 Arrived`,1800);
+  await bot(`🚗 On the way: ${nm}`,2200);
+  await bot(`📍 ARRIVED: ${nm} at ${info.area}`,2500);
+  await bot(`🎉 Request #${reqNo} completed. Stay safe!`,1500);
+  steps(6);busy=false;$("mic").disabled=false;
+}
+
+/* mic: tap → records ~2 s → sends the sample voice note */
+let recTimer=null,recSec=0;
+$("mic").onclick=()=>{
+  if(busy)return;
+  if(recTimer){finish();return;}
+  recSec=0;$("mic").classList.add("rec");$("mic").textContent="➤";$("txt").style.display="none";$("recbar").style.display="flex";$("tm").textContent="0:00";
+  recTimer=setInterval(()=>{recSec++;$("tm").textContent="0:0"+recSec;if(recSec>=2)finish();},1000);
+};
+function finish(){clearInterval(recTimer);recTimer=null;$("mic").classList.remove("rec");$("mic").textContent="🎙️";$("recbar").style.display="none";$("txt").style.display="block";
+  voiceBubble();run(NOTES[sel],true);}
+$("txt").onkeydown=e=>{if(e.key==="Enter"&&$("txt").value.trim()&&!busy){const t=$("txt").value.trim();$("txt").value="";add("out",esc(t)+"<i>"+now()+" ✓✓</i>");run(t,false);}};
+
+/* side controls */
+function chips(){$("chips").innerHTML=Object.keys(NOTES).map(k=>`<button class="${k===sel?"sel":""}" data-k="${k}">${k}</button>`).join("");}
+$("chips").onclick=e=>{if(e.target.dataset.k){sel=e.target.dataset.k;chips();}};
+$("reset").onclick=()=>location.reload();
+chips();steps(0);
+add("in","Hi 👋 This is ResQ-AI.\nSend a voice note (Tamil or English) with your emergency and area. Tap 🎙️ to try.<i>"+now()+"</i>");
+</script></body></html>
